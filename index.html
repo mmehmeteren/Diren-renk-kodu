@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gelişmiş Direnç Renk Hesaplayıcı</title>
+<style>
+:root{
+  --bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#60a5fa;
+  --accent2:#22c55e;--accent3:#f59e0b;--text-light:#e6eef8;--light:#f9fafb;
+}
+body{
+  font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+  background:var(--bg);
+  color:var(--text-light);
+  margin:0;
+  padding:24px;
+}
+.container{max-width:980px;margin:auto;}
+h1{font-size:22px;margin:0 0 4px;}
+p.lead{color:var(--muted);margin:0 0 14px;}
+.card{
+  background:var(--card);
+  padding:18px;
+  border-radius:14px;
+  box-shadow:0 0 20px #0003;
+}
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-bottom:12px;
+}
+label{font-size:13px;color:var(--muted);}
+select,input[type=color]{
+  padding:8px 6px;
+  border-radius:6px;
+  background:#1e293b;
+  color:white;
+  border:1px solid #334155;
+}
+button{
+  padding:6px 12px;
+  border-radius:6px;
+  border:0;
+  cursor:pointer;
+  font-weight:600;
+  transition:all 0.2s;
+}
+button:hover{opacity:0.85;}
+button.primary{background:var(--accent);color:black;}
+button.success{background:var(--accent2);color:black;}
+button.warn{background:var(--accent3);color:black;}
+.resistor{
+  flex:1;height:48px;border-radius:24px;
+  background:#e5e7eb;
+  display:flex;
+  align-items:center;
+  gap:6px;padding:0 10px;
+}
+.band{width:20px;height:32px;border-radius:3px;transition:background 0.3s;}
+.bands-visual{display:flex;gap:12px;align-items:center;margin:12px 0;flex-wrap:wrap;}
+.output{
+  margin-top:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#1e293b;
+  padding:8px 12px;
+  border-radius:6px;
+  flex-wrap:wrap;
+}
+.big{font-size:18px;font-weight:600;}
+.helper{font-size:13px;color:var(--muted);}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px;margin-top:10px;}
+.color-box{display:flex;align-items:center;gap:6px;background:#1e293b;padding:5px;border-radius:6px;}
+.sw{width:24px;height:16px;border-radius:3px;}
+.row{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+#clock{text-align:right;font-size:14px;color:var(--muted);margin-bottom:6px;}
+#presetBtns button{margin:3px 3px 0 0;font-size:13px;}
+#fileBtns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+#darkToggle{margin-left:auto;padding:6px 12px;border-radius:6px;border:0;cursor:pointer;background:#334155;color:white;}
+@media(max-width:600px){
+  .controls{flex-direction:column;}
+  .output{flex-direction:column;align-items:flex-start;}
+  .bands-visual{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div id="clock"></div>
+<h1 id="title">Direnç Renk Hesaplayıcı</h1>
+<p class="lead" id="subtitle">Bant sayısını seçin — hesaplama otomatik yapılır.</p>
+
+<div class="card">
+  <div class="controls">
+    <div><label id="bandCountLabel">Bant sayısı</label><br>
+      <select id="bandCount">
+        <option value="3">3</option>
+        <option value="4" selected>4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+      </select>
+    </div>
+    <div><label id="unitLabel">Birim</label><br>
+      <select id="unitMode">
+        <option value="auto">Otomatik</option>
+        <option value="ohm">Ω</option>
+        <option value="k">kΩ</option>
+        <option value="M">MΩ</option>
+      </select>
+    </div>
+    <div><label>Dil</label><br>
+      <select id="langSel">
+        <option value="tr">Türkçe</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div><label>HEX Renk Girişi</label><br><input type="color" id="hexInput" value="#ff0000"></div>
+    <div style="margin-left:auto;">
+      <label>&nbsp;</label><br>
+      <button class="primary" id="copyBtn">Kopyala</button>
+    </div>
+    <div>
+      <label>&nbsp;</label><br>
+      <button id="darkToggle">Light/Dark</button>
+    </div>
+  </div>
+
+  <div class="bands-visual">
+    <div class="resistor" id="resistor"></div>
+    <div style="min-width:210px">
+      <div class="output">
+        <div><div class="big" id="result">—</div>
+        <div class="helper" id="detail">—</div></div>
+        <button class="success" id="calc">HESAPLA</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inputs"></div>
+  <div id="presetBtns"></div>
+  <div id="legend"></div>
+  <div id="fileBtns">
+    <button class="warn" id="exportCSV">CSV Dışa Aktar</button>
+    <button class="warn" id="exportJSON">JSON Dışa Aktar</button>
+    <button id="importJSON">JSON Yükle</button>
+  </div>
+  <p class="helper" id="footerNote">Sıcaklık katsayısı sadece 6 bantta kullanılır.</p>
+</div>
+</div>
+
+<script>
+const translations={
+  tr:{title:"Direnç Renk Hesaplayıcı",subtitle:"Bant sayısını seçin — hesaplama otomatik yapılır.",
+      bandCount:"Bant sayısı",unit:"Birim",copy:"Kopyala",copied:"Kopyalandı",calc:"HESAPLA",
+      footer:"Sıcaklık katsayısı sadece 6 bantta kullanılır.",
+      colors:{black:"Siyah",brown:"Kahverengi",red:"Kırmızı",orange:"Turuncu",yellow:"Sarı",
+              green:"Yeşil",blue:"Mavi",violet:"Mor",gray:"Gri",white:"Beyaz",
+              gold:"Altın",silver:"Gümüş",pink:"Pembe"}},
+  en:{title:"Resistor Color Calculator",subtitle:"Select band count — auto calculation.",
+      bandCount:"Band count",unit:"Unit",copy:"Copy",copied:"Copied",calc:"CALCULATE",
+      footer:"Temperature coefficient only for 6-band.",
+      colors:{black:"Black",brown:"Brown",red:"Red",orange:"Orange",yellow:"Yellow",
+              green:"Green",blue:"Blue",violet:"Violet",gray:"Gray",white:"White",
+              gold:"Gold",silver:"Silver",pink:"Pink"}}
+};
+const colorDigits={black:0,brown:1,red:2,orange:3,yellow:4,green:5,blue:6,violet:7,gray:8,white:9};
+const multiplierMap={pink:0.001,silver:0.01,gold:0.1,black:1,brown:10,red:100,orange:1e3,yellow:1e4,green:1e5,blue:1e6,violet:1e7,gray:1e8,white:1e9};
+const toleranceMap={brown:'±1%',red:'±2%',green:'±0.5%',blue:'±0.25%',violet:'±0.1%',gray:'±0.05%',gold:'±5%',silver:'±10%',none:'±20%'};
+const tempcoMap={brown:'100ppm',red:'50ppm',orange:'15ppm',yellow:'25ppm',blue:'10ppm',violet:'5ppm'};
+const colors=["black","brown","red","orange","yellow","green","blue","violet","gray","white","gold","silver","pink"];
+const presetList=[["1 kΩ ±5%","brown","black","red","gold"],["4.7 kΩ ±5%","yellow","violet","red","gold"],["10 kΩ ±1%","brown","black","orange","brown"],["100 kΩ ±1%","brown","black","yellow","brown"],["1 MΩ ±5%","brown","black","green","gold"]];
+function cssColor(c){return{black:'#000',brown:'#7a4a2d',red:'#b91c1c',orange:'#ea580c',yellow:'#eab308',green:'#16a34a',blue:'#2563eb',violet:'#7c3aed',gray:'#6b7280',white:'#f9fafb',gold:'#d4af37',silver:'#c0c0c0',pink:'#ffc0cb'}[c]||'#000';}
+
+const resistor=document.getElementById('resistor');
+const bandCountSel=document.getElementById('bandCount');
+const inputsDiv=document.getElementById('inputs');
+const legend=document.getElementById('legend');
+const result=document.getElementById('result');
+const detail=document.getElementById('detail');
+const copyBtn=document.getElementById('copyBtn');
+const calcBtn=document.getElementById('calc');
+const langSel=document.getElementById('langSel');
+const unitSel=document.getElementById('unitMode');
+const hexInput=document.getElementById('hexInput');
+const presetBtns=document.getElementById('presetBtns');
+const darkToggle=document.getElementById('darkToggle');
+
+function buildLegend(){
+  legend.innerHTML='';
+  const L=translations[langSel.value].colors;
+  colors.forEach(c=>{
+    const box=document.createElement('div');box.className='color-box';
+    const sw=document.createElement('div');sw.className='sw';sw.style.background=cssColor(c);
+    const label=document.createElement('span');label.textContent=L[c];
+    box.append(sw,label);legend.appendChild(box);
+  });
+}
+
+function renderInputs(){
+  inputsDiv.innerHTML='';resistor.innerHTML='';
+  const n=+bandCountSel.value;
+  let names=[];
+  if(n===3)names=['1','2','Çarpan'];
+  if(n===4)names=['1','2','Çarpan','Tolerans'];
+  if(n===5)names=['1','2','3','Çarpan','Tolerans'];
+  if(n===6)names=['1','2','3','Çarpan','Tolerans','Sıcaklık'];
+  names.forEach((nm,i)=>{
+    const row=document.createElement('div');row.className='row';
+    const lbl=document.createElement('label');lbl.textContent=nm;
+    const sel=document.createElement('select');sel.id='band'+i;
+    let opts=[];
+    if(nm==='Tolerans')opts=Object.keys(toleranceMap);
+    else if(nm==='Sıcaklık')opts=Object.keys(tempcoMap);
+    else if(nm==='Çarpan')opts=Object.keys(multiplierMap);
+    else opts=Object.keys(colorDigits);
+    const L=translations[langSel.value].colors;
+    opts.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=L[o];sel.appendChild(op);});
+    row.append(lbl,sel);inputsDiv.appendChild(row);
+    const b=document.createElement('div');b.className='band';b.id='vis'+i;resistor.appendChild(b);
+    sel.addEventListener('change',updateVisual);
+  });
+  updateVisual();
+}
+
+function updateVisual(){
+  const n=+bandCountSel.value;
+  for(let i=0;i<n;i++){
+    const sel=document.getElementById('band'+i);
+    const vis=document.getElementById('vis'+i);
+    if(sel&&vis)vis.style.background=cssColor(sel.value);
+  }
+}
+
+function calc(){
+  const n=+bandCountSel.value;
+  const vals=[];
+  for(let i=0;i<n;i++){vals.push(document.getElementById('band'+i).value);}
+  let sig=0,mul=1,tol='',tc='';
+  if(n===3){sig=colorDigits[vals[0]]*10+colorDigits[vals[1]];mul=multiplierMap[vals[2]];}
+  if(n===4){sig=colorDigits[vals[0]]*10+colorDigits[vals[1]];mul=multiplierMap[vals[2]];tol=toleranceMap[vals[3]];}
+  if(n===5){sig=colorDigits[vals[0]]*100+colorDigits[vals[1]]*10+colorDigits[vals[2]];mul=multiplierMap[vals[3]];tol=toleranceMap[vals[4]];}
+  if(n===6){sig=colorDigits[vals[0]]*100+colorDigits[vals[1]]*10+colorDigits[vals[2]];mul=multiplierMap[vals[3]];tol=toleranceMap[vals[4]];tc=tempcoMap[vals[5]];}
+  let ohm=sig*mul;let out='';
+  if(unitSel.value==='auto'){if(ohm>=1e6)out=(ohm/1e6)+' MΩ';else if(ohm>=1e3)out=(ohm/1e3)+' kΩ';else out=ohm+' Ω';}
+  else if(unitSel.value==='ohm')out=ohm+' Ω';else if(unitSel.value==='k')out=(ohm/1e3)+' kΩ';else if(unitSel.value==='M')out=(ohm/1e6)+' MΩ';
+  result.textContent=out;detail.textContent=`${tol} ${tc}`;
+}
+
+function applyLang(){
+  const L=translations[langSel.value];
+  document.getElementById('title').textContent=L.title;
+  document.getElementById('subtitle').textContent=L.subtitle;
+  document.getElementById('bandCountLabel').textContent=L.bandCount;
+  document.getElementById('unitLabel').textContent=L.unit;
+  copyBtn.textContent=L.copy;calcBtn.textContent=L.calc;
+  document.getElementById('footerNote').textContent=L.footer;
+  buildLegend();renderInputs();buildPresets();
+}
+
+function buildPresets(){
+  presetBtns.innerHTML='<label class="helper">Hazır Değerler:</label><br>';
+  presetList.forEach(p=>{
+    const btn=document.createElement('button');btn.textContent=p[0];
+    btn.addEventListener('click',()=>{
+      bandCountSel.value=4;renderInputs();
+      p.slice(1).forEach((c,i)=>{document.getElementById('band'+i).value=c;});
+      updateVisual();calc();
+    });
+    presetBtns.appendChild(btn);
+  });
+}
+
+function updateClock(){
+  document.getElementById('clock').textContent=new Date().toLocaleString();
+}
+
+copyBtn.addEventListener('click',()=>{
+  let hexes=[];for(let i=0;i<+bandCountSel.value;i++){hexes.push(document.getElementById('vis'+i).style.background);}
+  navigator.clipboard.writeText(result.textContent+' '+detail.textContent+'\nHEX:'+hexes.join(' ')).then(()=>{
+    copyBtn.textContent=translations[langSel.value].copied;
+    setTimeout(()=>copyBtn.textContent=translations[langSel.value].copy,1500);
+  });
+});
+bandCountSel.addEventListener('change',renderInputs);
+unitSel.addEventListener('change',calc);
+langSel.addEventListener('change',applyLang);
+calcBtn.addEventListener('click',calc);
+setInterval(updateClock,1000);
+
+hexInput.addEventListener('input',()=>{
+  const firstBand=document.getElementById('band0');
+  const colorNames=Object.keys(cssColor(''));
+  document.getElementById('vis0').style.background=hexInput.value;
+});
+
+document.getElementById('exportCSV').addEventListener('click',()=>{
+  let n=+bandCountSel.value;
+  let bands=[];for(let i=0;i<n;i++){bands.push(document.getElementById('band'+i).value);}
+  const data=[result.textContent,detail.textContent,...bands].join(',');
+  const blob=new Blob([data],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='direnc.csv';a.click();
+});
+
+document.getElementById('exportJSON').addEventListener('click',()=>{
+  let n=+bandCountSel.value;
+  let bands=[];for(let i=0;i<n;i++){bands.push(document.getElementById('band'+i).value);}
+  const data={value:result.textContent,detail:detail.textContent,bands};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='direnc.json';a.click();
+});
+
+document.getElementById('importJSON').addEventListener('click',()=>{
+  const input=document.createElement('input');input.type='file';input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    file.text().then(t=>{
+        try{
+            const d=JSON.parse(t);
+            if(d.bands){
+                bandCountSel.value = d.bands.length;
+                renderInputs();
+                d.bands.forEach((c,i)=>{
+                    const sel=document.getElementById('band'+i);
+                    if(sel) sel.value=c;
+                });
+                updateVisual();
+                calc();
+            }
+            alert("Yüklendi: "+d.value+" "+d.detail);
+        }catch{
+            alert("Geçersiz JSON!");
+        }
+    });
+};
+input.click();
+});
+
+// Dark/Light toggle
+darkToggle.addEventListener('click',()=>{
+    const root=document.documentElement;
+    if(root.style.getPropertyValue('--bg')==='#0f1724'){
+        root.style.setProperty('--bg','#f9fafb');
+        root.style.setProperty('--card','#ffffff');
+        root.style.setProperty('--muted','#64748b');
+        root.style.setProperty('--text-light','#0f1724');
+        darkToggle.textContent='Dark Mode';
+    }else{
+        root.style.setProperty('--bg','#0f1724');
+        root.style.setProperty('--card','#0b1220');
+        root.style.setProperty('--muted','#94a3b8');
+        root.style.setProperty('--text-light','#e6eef8');
+        darkToggle.textContent='Light Mode';
+    }
+});
+
+applyLang();
+calc();
+</script>
+</body>
+</html>
